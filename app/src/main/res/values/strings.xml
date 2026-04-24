@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">DSCP Mark</string>
+    <string name="apply_btn">Apply</string>
+    <string name="error_root">No root privileges! Further operation is not possible.</string>
+    <string name="error_iptables">The iptables/nftables utility was not found.</string>
+    <string name="error_dscp">The kernel (iptables) does not support the DSCP target.</string>
+    <string name="specify_dscp_label">Specify the DSCP label (0–63)</string>
+    <string name="value_must_be_between_0_63">Value must be between 0 and 63</string>
+    <string name="cancel">Cancel</string>
+    <string name="error_init">Initialization error</string>
+    <string name="exit">Exit</string>
+    <string name="rules_applied">Rules applied and saved</string>
+    <string name="dscp_mark_label">DSCP Mark: %1$d</string>
+    <string name="version_label">DSCP Mark Version %1$s</string>
+    <string name="version_unknown">DSCP Mark Version Unknown</string>
+    <string name="ok">OK</string>
+    <string name="search_hint">Search apps ...</string>
+    <string name="android_system">Android System</string>
+    <string name="loading">Loading...</string>
+</resources>
