@@ -5,12 +5,10 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Stylized 'D' for DSCP -->
     <path
         android:fillColor="#FFFFFF"
         android:pathData="M35,35h20c15,0 25,10 25,20s-10,20 -25,20h-20z M42,42v26h13c10,0 16,-6 16,-13s-6,-13 -16,-13z" />
 
-    <!-- 'Mark' Indicator (Checkmark) -->
     <path
         android:fillColor="#FFD600"
         android:pathData="M65,65l8,8l15,-15l-3,-3l-12,12l-5,-5z" />

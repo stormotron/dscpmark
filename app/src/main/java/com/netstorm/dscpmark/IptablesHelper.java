@@ -1,6 +1,8 @@
 package com.netstorm.dscpmark;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -75,6 +77,7 @@ public class IptablesHelper {
         executor.execute(() -> {
             DatabaseHelper dbHelper = new DatabaseHelper(context.getApplicationContext());
             Map<String, AppItem> rules = dbHelper.getSavedRules();
+            PackageManager pm = context.getPackageManager();
 
             StringBuilder script = new StringBuilder();
             script.append("iptables -t mangle -F DSCPMARK 2>/dev/null\n");
@@ -83,8 +86,20 @@ public class IptablesHelper {
             script.append("iptables -t mangle -N DSCPMARK\n");
 
             for (AppItem item : rules.values()) {
+                int currentUid = -1;
+                if ("android".equals(item.packageName)) {
+                    currentUid = 0;
+                } else {
+                    try {
+                        ApplicationInfo ai = pm.getApplicationInfo(item.packageName, 0);
+                        currentUid = ai.uid;
+                    } catch (PackageManager.NameNotFoundException e) {
+                        continue;
+                    }
+                }
+
                 script.append("iptables -t mangle -A DSCPMARK -m owner --uid-owner ")
-                      .append(item.uid)
+                      .append(currentUid)
                       .append(" -j DSCP --set-dscp ")
                       .append(item.dscpMark)
                       .append("\n");

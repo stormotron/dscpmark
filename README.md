@@ -22,6 +22,9 @@ iptables -t mangle -A OUTPUT -j DSCPMARK
 ```
 
 ## Changelog
+### v0.0.2 (2026-05-04)
+- An updated algorithm for storing app information.
+
 ### v0.0.1 (2026-04-24)
 - Initial release.
 - Application listing and search.

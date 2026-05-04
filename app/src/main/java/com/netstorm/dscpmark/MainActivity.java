@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseHelper dbHelper;
     private View mainContent;
     private View loadingView;
+    private EditText etSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,10 +50,10 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recyclerViewApps);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        
-        initData();
 
-        EditText etSearch = findViewById(R.id.etSearch);
+        dbHelper = new DatabaseHelper(this);
+
+        etSearch = findViewById(R.id.etSearch);
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -71,13 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnApply = findViewById(R.id.btnApply);
         btnApply.setOnClickListener(v -> {
-            Map<String, AppItem> selectedApps = new HashMap<>();
-            for (AppItem item : appList) {
-                if (item.isSelected) {
-                    selectedApps.put(item.packageName, item);
-                }
-            }
-            dbHelper.saveRules(selectedApps);
+            dbHelper.saveRules(appList);
             IptablesHelper.deleteMainRule();
             IptablesHelper.applyRules(this, () -> {
                 Toast.makeText(this, R.string.rules_applied, Toast.LENGTH_SHORT).show();
@@ -86,7 +80,26 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mainContent != null) mainContent.setVisibility(View.GONE);
+        if (loadingView != null) loadingView.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initData();
+    }
+
     private void initData() {
+        loadingView.setVisibility(View.VISIBLE);
+        mainContent.setVisibility(View.GONE);
+        if (etSearch != null) {
+            etSearch.setText("");
+        }
+
         new Thread(() -> {
             String error = IptablesHelper.checkSystemRequirements(this);
             if (error != null) {
@@ -94,20 +107,24 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            dbHelper = new DatabaseHelper(this);
-            loadApps();
+            List<AppItem> loadedApps = loadApps();
 
             runOnUiThread(() -> {
-                adapter = new AppAdapter(appList);
-                recyclerView.setAdapter(adapter);
+                appList = loadedApps;
+                if (adapter == null) {
+                    adapter = new AppAdapter(appList);
+                    recyclerView.setAdapter(adapter);
+                } else {
+                    adapter.updateData(appList);
+                }
                 loadingView.setVisibility(View.GONE);
                 mainContent.setVisibility(View.VISIBLE);
             });
         }).start();
     }
 
-    private void loadApps() {
-        appList = new ArrayList<>();
+    private List<AppItem> loadApps() {
+        List<AppItem> list = new ArrayList<>();
         PackageManager pm = getPackageManager();
         Map<String, AppItem> savedRules = dbHelper.getSavedRules();
 
@@ -121,13 +138,13 @@ public class MainActivity extends AppCompatActivity {
             systemItem.isSelected = true;
             systemItem.dscpMark = savedRules.get(systemItem.packageName).dscpMark;
         }
-        appList.add(systemItem);
+        list.add(systemItem);
 
         List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
-        
+
         for (ApplicationInfo packageInfo : packages) {
             if (packageInfo.packageName.equals(getPackageName())) continue;
-            
+
             if (pm.getLaunchIntentForPackage(packageInfo.packageName) != null) {
                 String appName = packageInfo.loadLabel(pm).toString();
                 AppItem item = new AppItem(
@@ -141,11 +158,11 @@ public class MainActivity extends AppCompatActivity {
                     item.isSelected = true;
                     item.dscpMark = savedRules.get(item.packageName).dscpMark;
                 }
-                appList.add(item);
+                list.add(item);
             }
         }
-        
-        Collections.sort(appList, (o1, o2) -> {
+
+        Collections.sort(list, (o1, o2) -> {
             if (o1.uid == 0) return -1;
             if (o2.uid == 0) return 1;
 
@@ -162,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
             }
             return name1.compareToIgnoreCase(name2);
         });
+        return list;
     }
 
     private boolean isLatin(char c) {

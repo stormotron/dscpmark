@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,18 +30,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public void saveRules(Map<String, AppItem> selectedApps) {
+    public void saveRules(Collection<AppItem> apps) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.beginTransaction();
         try {
-            db.execSQL("DELETE FROM " + TABLE_NAME);
-            for (AppItem item : selectedApps.values()) {
+            for (AppItem item : apps) {
                 if (item.isSelected) {
                     ContentValues cv = new ContentValues();
                     cv.put("package_name", item.packageName);
                     cv.put("dscp_mark", item.dscpMark);
                     cv.put("uid", item.uid);
-                    db.insert(TABLE_NAME, null, cv);
+                    db.insertWithOnConflict(TABLE_NAME, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+                } else {
+                    db.delete(TABLE_NAME, "package_name = ?", new String[]{item.packageName});
                 }
             }
             db.setTransactionSuccessful();

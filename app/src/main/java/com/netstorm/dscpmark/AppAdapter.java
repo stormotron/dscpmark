@@ -19,28 +19,35 @@ import java.util.List;
 
 public class AppAdapter extends RecyclerView.Adapter<AppAdapter.AppViewHolder> {
 
-    private List<AppItem> appList;
+    private List<AppItem> displayList;
     private List<AppItem> fullList;
+    private String lastQuery = "";
 
     public AppAdapter(List<AppItem> appList) {
-        this.appList = appList;
-        this.fullList = new ArrayList<>(appList);
+        this.fullList = appList;
+        this.displayList = new ArrayList<>(appList);
     }
 
     public void filter(String query) {
-        appList.clear();
+        this.lastQuery = query;
+        displayList.clear();
         if (query.isEmpty()) {
-            appList.addAll(fullList);
+            displayList.addAll(fullList);
         } else {
             String lowerCaseQuery = query.toLowerCase();
             for (AppItem item : fullList) {
                 if (item.appName.toLowerCase().contains(lowerCaseQuery) ||
                     item.packageName.toLowerCase().contains(lowerCaseQuery)) {
-                    appList.add(item);
+                    displayList.add(item);
                 }
             }
         }
         notifyDataSetChanged();
+    }
+
+    public void updateData(List<AppItem> newList) {
+        this.fullList = newList;
+        filter(lastQuery);
     }
 
     @NonNull
@@ -52,7 +59,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.AppViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull AppViewHolder holder, int position) {
-        AppItem item = appList.get(position);
+        AppItem item = displayList.get(position);
         
         holder.cbApp.setOnCheckedChangeListener(null);
         holder.tvAppName.setText(item.appName);
@@ -112,7 +119,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.AppViewHolder> {
 
     @Override
     public int getItemCount() {
-        return appList.size();
+        return displayList.size();
     }
 
     public static class AppViewHolder extends RecyclerView.ViewHolder {
